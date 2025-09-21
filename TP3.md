@@ -4,10 +4,12 @@
 
 ## I. Présentation du lab
 🌞 Allumez les VMs et effectuez la conf élémentaire :
-🌞adresse IP statique
+
+    🌞adresse IP statique
     définition du nom de domaine avec hostnamectl
     vous remplirez les fichiers /etc/hosts des trois machines pour qu'elles se joignent avec leurs noms
-🌞 le compte-rendu, j'veux juste :
+
+    🌞 le compte-rendu, j'veux juste :
         ping kvm1.one depuis frontend.one
         ping kvm2.one depuis frontend.one
 
@@ -2674,10 +2676,8 @@ success
 ```
 
 🌞 Handle SSH
-
-    uniquement pour ce point, repassez en SSH sur frontend.one
-
-    OpenNebula reposant sur des connexions SSH, elles doivent toutes se passer sans interaction humaine (pas de demande d'acceptation d'empreintes, ni de passwords par exemple)
+uniquement pour ce point, repassez en SSH sur frontend.one
+OpenNebula reposant sur des connexions SSH, elles doivent toutes se passer sans interaction humaine (pas de demande d'acceptation d'empreintes, ni de passwords par exemple)
         donc, en étant connecté en tant que oneadmin sur frontend.one
         les commandes doivent fonctionner sans aucun prompt (ni password, ni empreinte) :
 
@@ -2719,4 +2719,93 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGq/mTjvtLQK8RP9gMM6NdUNWDlpxIVig6KT6ZbfDODl
 
 SHA256:fPJ3X+pEn8I46kwoRjffsSat7X5NA5OVXzwiliYn+RA oneadmin@frontend
 
+```
 
+PS C:\Users\Fadhil> ssh user1@10.3.1.10
+user1@10.3.1.10's password:
+Last login: Wed Sep 17 01:57:51 2025 from 10.3.1.1
+[user1@frontend ~]$ sudo su - oneadmin
+[sudo] password for user1:
+Last login: Wed Sep 17 02:44:16 CEST 2025 from 10.3.1.10 on pts/1
+[oneadmin@frontend ~]$ ssh  oneadmin@frontend.one
+Last login: Sun Sep 21 20:03:09 2025
+[oneadmin@frontend ~]$
+```
+
+```
+[user1@frontend ~]$ sudo -u oneadmin ssh-copy-id -i /home/oneadmin/.ssh/id_ed25519 oneadmin@kvm1.one
+```
+
+
+
+
+# II.3. Setup réseau
+## A. Intro
+
+## B. Création du Virtual Network
+### Étape A : Création du Virtual Network (WebUI)
+
+### 🌞 Étape B : Préparer le bridge réseau
+```
+[user1@kvm1 ~]$ sudo ip link add name vxlan_bridge type bridge
+[sudo] password for user1:
+[user1@kvm1 ~]$ ip link show vxlan_bridge
+4: vxlan_bridge: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/ether 8e:16:6b:b7:c3:20 brd ff:ff:ff:ff:ff:ff
+```
+
+```
+[user1@kvm1 ~]$ sudo ip addr add 10.220.220.201/24 dev vxlan_bridge
+[user1@kvm1 ~]$ ip addr show vxlan_bridge
+4: vxlan_bridge: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 8e:16:6b:b7:c3:20 brd ff:ff:ff:ff:ff:ff
+    inet 10.220.220.201/24 scope global vxlan_bridge
+       valid_lft forever preferred_lft forever
+    inet6 fe80::8c16:6bff:feb7:c320/64 scope link
+       valid_lft forever preferred_lft forever
+[user1@kvm1 ~]$ sudo firewall-cmd --add-interface=vxlan_bridge --zone=public --permanent
+success
+[user1@kvm1 ~]$ sudo firewall-cmd --add-masquerade --permanent
+success
+[user1@kvm1 ~]$ sudo firewall-cmd --reload
+success
+[user1@kvm1 ~]$
+```
+
+
+# C. Préparer le bridge réseau¶
+
+### ➜ Ces étapes sont à effectuer uniquement sur kvm1.one dans un premier temps
+dans la partie IV du TP, quand vous mettrez en place kvm2.one, il faudra aussi refaire ça dessus
+
+🌞 Créer et configurer le bridge Linux
+
+```
+[user1@kvm1 ~]$ sudo vim /opt/vxlan.sh
+[user1@kvm1 ~]$ sudo chmod +x /opt/vxlan.sh
+```
+
+### je Créer le service systemd
+
+```
+[user1@kvm1 ~]$ sudo vim /etc/systemd/system/vxlan.service
+[user1@kvm1 ~]$ sudo systemctl daemon-reload
+[user1@kvm1 ~]$ sudo systemctl start vxlan
+[user1@kvm1 ~]$ ip addr show vxlan_bridge
+4: vxlan_bridge: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/ether 8e:16:6b:b7:c3:20 brd ff:ff:ff:ff:ff:ff
+    inet 10.220.220.201/24 scope global vxlan_bridge
+       valid_lft forever preferred_lft forever
+    inet6 fe80::8c16:6bff:feb7:c320/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+### j'active au boot
+
+```
+[user1@kvm1 ~]$ sudo systemctl enable vxlan
+Created symlink /etc/systemd/system/multi-user.target.wants/vxlan.service → /etc/systemd/system/vxlan.service.
+```
+
+
+# III. Utiliser la plateforme
