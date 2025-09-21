@@ -2712,6 +2712,7 @@ The key's randomart image is:
 ```
 [user1@frontend ~]$ sudo -u oneadmin cat /home/oneadmin/.ssh/id_ed25519.pub
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGq/mTjvtLQK8RP9gMM6NdUNWDlpxIVig6KT6ZbfDODl oneadmin@frontend
+
 ```
 
 
@@ -2809,3 +2810,42 @@ Created symlink /etc/systemd/system/multi-user.target.wants/vxlan.service → /e
 
 
 # III. Utiliser la plateforme
+
+
+### ➜ Tester la connectivité à la VM
+déjà est-ce qu'on peut la ping ?
+depuis le noeud kvm1.one, faites un ping vers l'IP de la VM
+l'IP de la VM est visible dans la WebUI
+
+```
+ping -c 3 10.220.220.100
+PING 10.220.220.100 (10.220.220.100) 56(84) bytes of data.
+64 bytes from 10.220.220.100: icmp_seq=1 ttl=64 time=0.879 ms
+64 bytes from 10.220.220.100: icmp_seq=2 ttl=64 time=0.842 ms
+64 bytes from 10.220.220.100: icmp_seq=3 ttl=64 time=0.801 ms
+
+--- 10.220.220.100 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+```
+```
+sudo su - oneadmin
+eval $(ssh-agent)
+ssh-add ~/.ssh/id_ed25519
+Identity added: /var/lib/one/.ssh/id_ed25519 (oneadmin@frontend)
+ssh -J kvm1.one root@10.220.220.100
+[root@localhost ~]# 
+ip route add default via 10.220.220.201
+ip route show
+default via 10.220.220.201 dev eth0
+10.220.220.0/24 dev eth0 proto kernel scope link src 10.220.220.100
+ping -c 3 1.1.1.1
+PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.
+64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=20.1 ms
+64 bytes from 1.1.1.1: icmp_seq=2 ttl=57 time=19.8 ms
+64 bytes from 1.1.1.1: icmp_seq=3 ttl=57 time=21.0 ms
+
+
+```
+
+
+# IV. Ajout d'un noeud et VXLAN
