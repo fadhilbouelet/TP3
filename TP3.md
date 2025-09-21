@@ -4,12 +4,10 @@
 
 ## I. Présentation du lab
 🌞 Allumez les VMs et effectuez la conf élémentaire :
-
-    🌞adresse IP statique
+🌞adresse IP statique
     définition du nom de domaine avec hostnamectl
     vous remplirez les fichiers /etc/hosts des trois machines pour qu'elles se joignent avec leurs noms
-
-    🌞 le compte-rendu, j'veux juste :
+🌞 le compte-rendu, j'veux juste :
         ping kvm1.one depuis frontend.one
         ping kvm2.one depuis frontend.one
 
@@ -2720,4 +2718,5 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGq/mTjvtLQK8RP9gMM6NdUNWDlpxIVig6KT6ZbfDODl
 
 
 SHA256:fPJ3X+pEn8I46kwoRjffsSat7X5NA5OVXzwiliYn+RA oneadmin@frontend
+
 
